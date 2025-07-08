@@ -1,0 +1,9 @@
+services:
+  - type: web
+    name: rubick-cup-bot
+    runtime: python
+    buildCommand: ""
+    startCommand: "python bot.py"
+    envVars:
+      - fromFile: .env
+    plan: free
