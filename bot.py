@@ -385,9 +385,11 @@ async def on_startup(bot: Bot):
     await bot.set_webhook(WEBHOOK_URL)
     print(f"✅ Webhook установлен: {WEBHOOK_URL}")
 
+
 async def on_shutdown(bot: Bot):
     await bot.delete_webhook()
     print("🛑 Webhook удалён")
+
 
 
 
@@ -418,8 +420,6 @@ async def send_reminder(team1, team2, match_id, text):
         await bot.send_message(ADMIN_ID, f"❗ Ошибка при отправке напоминания: {e}")
 
 if __name__ == "__main__":
-    from aiohttp import web
-
     app = web.Application()
     SimpleRequestHandler(dispatcher=dp, bot=bot).register(app, path=WEBHOOK_PATH)
     setup_application(app, dp, bot=bot)
@@ -428,6 +428,7 @@ if __name__ == "__main__":
     dp.shutdown.register(on_shutdown)
 
     web.run_app(app, host="0.0.0.0", port=int(os.getenv("PORT", 10000)))
+
 
 
 
