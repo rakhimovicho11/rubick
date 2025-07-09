@@ -227,11 +227,17 @@ async def callback_help(callback: CallbackQuery):
 @dp.callback_query(lambda c: c.data == "about")
 async def callback_about(callback: CallbackQuery):
     await callback.message.answer(
-        "🧩 <b>О боте Лавки Рубика</b>...\n",  # Обрезал для краткости
+        "🧩 <b>О боте Лавки Рубика</b>\n\n"
+        "Этот бот создан, чтобы помочь тебе и твоей команде легко и быстро регистрироваться на турниры нашего канала.\n"
+        "Здесь собираются только лучшие игроки, которые горят желанием побеждать и развиваться!\n\n"
+        "🔥 Наш канал: <a href='https://t.me/rubickshop'>@rubickshop</a>\n"
+        "🚀 Готовься к эпичным матчам и незабываемым эмоциям!\n\n"
+        "Если есть вопросы — просто напиши мне в личку: <b>@laziz_rahimovich</b>.",
         disable_web_page_preview=True,
         reply_markup=main_menu
     )
     await callback.answer()
+
 
 @dp.callback_query(lambda c: c.data == "show_commands")
 async def show_commands_callback(callback: CallbackQuery):
