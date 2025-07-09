@@ -276,6 +276,7 @@ async def process_players(message: Message, state: FSMContext):
     team_data = []
     usernames_in_team = set()
     dota_ids_in_team = set()
+    user_ids_to_check = []
 
     for i, line in enumerate(lines, 1):
         parts = line.split()
@@ -296,8 +297,23 @@ async def process_players(message: Message, state: FSMContext):
         dota_ids_in_team.add(dota_id)
         team_data.append((username, dota_id, int(mmr)))
 
-    if not await is_user_subscribed(message.from_user.id):
-        await message.answer(f"❌ Подпишись на канал {CHANNEL_USERNAME} для участия.")
+    # Чекаем подписку у всех участников команды
+    failed_usernames = []
+    for username in usernames_in_team:
+        try:
+            user = await bot.get_chat(username)
+            member = await bot.get_chat_member(CHANNEL_USERNAME, user.id)
+            if member.status not in ("member", "administrator", "creator"):
+                failed_usernames.append(username)
+        except:
+            failed_usernames.append(username)
+
+    if failed_usernames:
+        await message.answer(
+            f"❌ Эти участники команды не подписаны на канал {CHANNEL_USERNAME}:\n" +
+            "\n".join(failed_usernames) +
+            "\n\nПопроси их подписаться и попробуй снова."
+        )
         return
 
     data = await state.get_data()
@@ -315,8 +331,13 @@ async def process_players(message: Message, state: FSMContext):
         registered_dota_ids.add(dota_id)
 
     await message.answer(f"✅ Команда <b>{team_name}</b> зарегистрирована!", reply_markup=main_menu)
-    await bot.send_message(ADMIN_ID, f"🔥 Новая команда: <b>{team_name}</b>\n" + "\n".join(f"{u} | {d}" for u, d, _ in team_data))
+    await bot.send_message(
+        ADMIN_ID,
+        f"🔥 Новая команда: <b>{team_name}</b>\n" +
+        "\n".join(f"{u} | {d}" for u, d, _ in team_data)
+    )
     await state.clear()
+
 
 # Проверка подписки
 async def is_user_subscribed(user_id: int) -> bool:
