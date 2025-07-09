@@ -2,7 +2,7 @@ from PIL import Image, ImageDraw, ImageFont
 import os
 
 # Пути
-BACKGROUND_PATH = "background2.png"  # Заранее положи туда красивый фон в стиле Dota 2
+BACKGROUND_PATH = "background1.png"  # Заранее положи туда красивый фон в стиле Dota 2
 FONT_PATH = "/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf"  # Или путь к своему шрифту
 OUTPUT_PATH = "bracket.png"
 
