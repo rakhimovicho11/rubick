@@ -401,7 +401,7 @@ async def main():
     dp.startup.register(on_startup)
     dp.shutdown.register(on_shutdown)
 
-    web.run_app(app, host="0.0.0.0", port=int(os.getenv("PORT", 10000)))
+    return app
 
 
 # Напоминания перед матчами
@@ -432,6 +432,10 @@ async def send_reminder(team1, team2, match_id, text):
 
 if __name__ == "__main__":
     import asyncio
-    asyncio.run(main())
+    from aiohttp import web
+    app = asyncio.run(main())
+    web.run_app(app, host="0.0.0.0", port=int(os.getenv("PORT", 10000)))
+
+
 
 
