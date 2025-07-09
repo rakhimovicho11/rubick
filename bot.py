@@ -427,6 +427,13 @@ if __name__ == "__main__":
     dp.startup.register(on_startup)
     dp.shutdown.register(on_shutdown)
 
+    # 👇 держит приложение "в живых"
+    async def keep_alive(app):
+        while True:
+            await asyncio.sleep(3600)
+
+    app.on_startup.append(keep_alive)
+
     web.run_app(app, host="0.0.0.0", port=int(os.getenv("PORT", 10000)))
 
 
