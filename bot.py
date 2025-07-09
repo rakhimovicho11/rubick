@@ -389,19 +389,6 @@ async def on_shutdown(bot: Bot):
     await bot.delete_webhook()
     print("🛑 Webhook удалён")
 
-async def main():
-    await set_commands()
-    await bot.set_webhook(WEBHOOK_URL)
-    print(f"✅ Webhook установлен: {WEBHOOK_URL}")
-
-    app = web.Application()
-    SimpleRequestHandler(dispatcher=dp, bot=bot).register(app, path=WEBHOOK_PATH)
-    setup_application(app, dp, bot=bot)
-
-    dp.startup.register(on_startup)
-    dp.shutdown.register(on_shutdown)
-
-    return app
 
 
 # Напоминания перед матчами
@@ -431,10 +418,17 @@ async def send_reminder(team1, team2, match_id, text):
         await bot.send_message(ADMIN_ID, f"❗ Ошибка при отправке напоминания: {e}")
 
 if __name__ == "__main__":
-    import asyncio
     from aiohttp import web
-    app = asyncio.run(main())
+
+    app = web.Application()
+    SimpleRequestHandler(dispatcher=dp, bot=bot).register(app, path=WEBHOOK_PATH)
+    setup_application(app, dp, bot=bot)
+
+    dp.startup.register(on_startup)
+    dp.shutdown.register(on_shutdown)
+
     web.run_app(app, host="0.0.0.0", port=int(os.getenv("PORT", 10000)))
+
 
 
 
