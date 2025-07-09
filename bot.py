@@ -389,7 +389,7 @@ async def on_shutdown(bot: Bot):
     await bot.delete_webhook()
     print("🛑 Webhook удалён")
 
-    async def main():
+async def main():
     await set_commands()
     await bot.set_webhook(WEBHOOK_URL)
     print(f"✅ Webhook установлен: {WEBHOOK_URL}")
@@ -398,7 +398,6 @@ async def on_shutdown(bot: Bot):
     SimpleRequestHandler(dispatcher=dp, bot=bot).register(app, path=WEBHOOK_PATH)
     setup_application(app, dp, bot=bot)
 
-    # Регистрируем обработчики запуска и выключения
     dp.startup.register(on_startup)
     dp.shutdown.register(on_shutdown)
 
