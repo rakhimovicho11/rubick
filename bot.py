@@ -120,6 +120,8 @@ async def manual_generate(message: Message):
     await generate_bracket()
     await message.answer("✅ Сетка сгенерирована и отправлена капитанам!")
 
+from datetime import datetime, timedelta
+
 async def generate_bracket():
     global tournament_bracket, match_id_counter, current_round
     sorted_teams = sorted(registered_teams, key=lambda x: x['avg_mmr'])
@@ -128,21 +130,45 @@ async def generate_bracket():
     match_id_counter = 1
     current_round = 1
 
+    # Время начала первого матча — через 2 часа
+    base_start_time = datetime.now() + timedelta(hours=2)
+
     for i in range(0, 16, 2):
-        tournament_bracket.append((sorted_teams[i], sorted_teams[i + 1], match_id_counter))
+        match_time = base_start_time + timedelta(hours=i // 2)
+
+        match = {
+            "team1": sorted_teams[i],
+            "team2": sorted_teams[i + 1],
+            "match_id": match_id_counter,
+            "start_time": match_time
+        }
+        tournament_bracket.append(match)
+
+        # Создаем задачу на напоминания
+        asyncio.create_task(schedule_reminders(
+            match["team1"], match["team2"], match["match_id"], match["start_time"]
+        ))
+
         match_id_counter += 1
 
-    bracket_data = [[(team1['name'], team2['name']) for team1, team2, _ in tournament_bracket]]
+    # Генерация изображения сетки
+    bracket_data = [[(match["team1"]["name"], match["team2"]["name"]) for match in tournament_bracket]]
     file_path = generate_bracket_image(bracket_data)
 
-    for team1, team2, _ in tournament_bracket:
-        for captain_id in (team1['captain_id'], team2['captain_id']):
+    # Рассылка картинки капитанам
+    for match in tournament_bracket:
+        for captain_id in (match["team1"]["captain_id"], match["team2"]["captain_id"]):
             await bot.send_photo(captain_id, photo=open(file_path, "rb"))
 
-    match_list = "\n".join([f"Матч #{match_id}: {team1['name']} vs {team2['name']}" for team1, team2, match_id in tournament_bracket])
+    # Сообщение админу
+    match_list = "\n".join([
+        f"Матч #{match['match_id']}: {match['team1']['name']} vs {match['team2']['name']}"
+        for match in tournament_bracket
+    ])
     await bot.send_message(ADMIN_ID, f"📊 <b>Турнирная сетка — Раунд 1</b>\n\n{match_list}")
 
     await notify_round_matches()
+
 
 async def notify_round_matches():
     for team1, team2, match_id in tournament_bracket:
@@ -371,6 +397,32 @@ async def main():
     SimpleRequestHandler(dispatcher=dp, bot=bot).register(app, path=WEBHOOK_PATH)
     setup_application(app, dp, bot=bot)
     return app
+
+# Напоминания перед матчами
+async def schedule_reminders(team1, team2, match_id, match_time):
+    now = datetime.now()
+    in_1h = (match_time - timedelta(hours=1)) - now
+    in_30m = (match_time - timedelta(minutes=30)) - now
+
+    if in_1h.total_seconds() > 0:
+        await asyncio.sleep(in_1h.total_seconds())
+        await send_reminder(team1, team2, match_id, "⏰ До матча остался 1 час!")
+
+    if in_30m.total_seconds() > 0:
+        await asyncio.sleep(in_30m.total_seconds())
+        await send_reminder(team1, team2, match_id, "⏳ До матча осталось 30 минут!")
+
+async def send_reminder(team1, team2, match_id, text):
+    message = (
+        f"{text}\n\n"
+        f"🎮 Матч <b>#{match_id}</b>: <b>{team1['name']}</b> vs <b>{team2['name']}</b>\n"
+        f"📌 Подготовьтесь заранее!"
+    )
+    try:
+        await bot.send_message(team1["captain_id"], message)
+        await bot.send_message(team2["captain_id"], message)
+    except Exception as e:
+        await bot.send_message(ADMIN_ID, f"❗ Ошибка при отправке напоминания: {e}")
 
 if __name__ == "__main__":
     web.run_app(main(), host="0.0.0.0", port=int(os.getenv("PORT", 10000)))
